@@ -6,7 +6,7 @@ import pymongo
 
 def main(stock, startDate, endDate):
 
-    msft = yf.download("SPY "+stock, start=startDate, end=endDate)
+    data = yf.download("SPY "+stock, start=startDate, end=endDate)
 
     myclient = pymongo.MongoClient("mongodb://localhost:27017/")
     stockdb = myclient["stockdb"]
@@ -14,8 +14,10 @@ def main(stock, startDate, endDate):
     #collectionNames =  myclient["stockdb"].list_collection_names(session=None, filter=None)
 
     stockCol = stockdb[stock]  
-    
-    records = json.loads(msft.to_json()).values()
+
+    print(data.info)
+
+    records = json.loads(data.to_json()).values()
     stockCol.insert(records)
     
 
