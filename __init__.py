@@ -21,4 +21,4 @@ def main(stock, startDate, endDate):
     stockCol.insert(records)
     
 
-main("AAPL", "2017-01-01", "2017-04-30")
+main("AMZN", "2017-01-01", "2017-04-30")
