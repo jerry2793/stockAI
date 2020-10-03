@@ -1,25 +1,32 @@
 from requests import get
 from datetime import datetime, timedelta 
-import sqlite3
+# import sqlite3
+
+STOCKS = ['AAPL']
 
 # all you need to do is to change the STOCKS with appr symbols conn = sqlite3.connect('data.db') c = conn.cursor() KEYS = ['c','h','l','o','t','v'] STOCKS = ['aapl','AMZN'.lower(),'NVDA'.lower()]
-for i in STOCKS:
-    try:
-        print(f'creating table: {i}')
-        c.execute(f"""CREATE TABLE {i} (
-            c real,
-            h real,
-            l real,
-            o real,
-            t real,
-            v real
-        )""")
-    except:
-        pass
+# for i in STOCKS:
+#     try:
+#         print(f'creating table: {i}')
+#         c.execute(f"""CREATE TABLE {i} (
+#             c real,
+#             h real,
+#             l real,
+#             o real,
+#             t real,
+#             v real
+#         )""")
+#     except:
+#         pass
 
 def historical_save_gen(json):
     # generates rows in the correct (corresponding) format to save
     # print(json)
+    if json['s'] == 'no_data':
+        raise ValueError("""
+            no data was received. 
+        """)
+
     for i in range(len(json['t'])):
         row = []
         # print('main loop')
@@ -36,7 +43,7 @@ def historical_save_gen(json):
 
 
 def save(r):
-    # saves the row
+    # saves the row with sqlite3
     cols = ''
     for i in KEYS:
         cols += f'{i},'
@@ -59,12 +66,12 @@ def getHistoricalData(s,start,finish,res=1):
         'resolution': res,
         'from': start,
         'to': finish,
+        # 'format':csv,
         'token': 'btbetpn48v6tim9d4ve0'
     }
-    url = 'https://urldefense.com/v3/__http://finnhub.io/api/v1/stock/candle__;!!I5pVk4LIGAfnvw!x6oGMmHXru6nL2xgMlJI0A7DCuC2Pxwxm1ZodRd35F7WGpUyVK6S6GtOmLiGwn8y6zCM$ '
+    url = 'http://finnhub.io/api/v1/stock/candle'
     r = get(url,params=params)
-    # print(r.status_code)
-
+    print(r.json())
     return dict(r.json())
 
 
@@ -79,39 +86,42 @@ def date_gen(start,finish):
     for i in range(x.days):
         s = finish - timedelta(days=i)
         f = finish - timedelta(days=i-1)
-        yield [s.timestamp(),f.timestamp()]
+        yield [s,f]
 
 
-def main(q,start,finish):
+def main(q,start,finish,writer=None):
     r = getHistoricalData(
-                q.upper(),
-                start,
-                finish
-                )
-    # print(r)
-    # j = 0
-    for i in historical_save_gen(r):
-        # print(i)
+        q.upper(),
+        start,
+        finish
+    )
 
-        save(i)
+    for i in historical_save_gen(r):
+        # save(i)
         print(i)
-        # j += 1
-        # if j == 10:
-        #     break
-        # break
+        if writer is not None:
+            writer.writerow(i)
 
 
 if __name__ == '__main__':
     for i in STOCKS:
         print(i.upper())
-        for j in date_gen(datetime(2019,9,17),datetime(2020,8,30)):
-            # print(j)
-            main(i.upper(),j[0],j[1])
+
+        for j in date_gen(
+                datetime(2019,10,5),
+                datetime(2020,9,15)
+            ):
+            print(j)
+            main(
+                i.upper(),
+                j[0], 
+                j[1]
+            )
 
 
     # for i in date_gen(datetime(2020,7,5),datetime(2020,8,6)):
     #     print(str(i))
 
 
-        conn.commit()
-    conn.close()
+    #     conn.commit()
+    # conn.close()
